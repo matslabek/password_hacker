@@ -71,7 +71,7 @@ if __name__ == "__main__":
             try:
                 hacky.send_message(combination)
                 response = hacky.receive_response()
-                if response == "Connection success!":
+                if response == "Connection successful!":
                     print(combination)
                     break
             except ConnectionAbortedError:
