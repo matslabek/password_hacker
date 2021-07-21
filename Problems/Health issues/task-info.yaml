@@ -1,0 +1,15 @@
+type: code
+files:
+- name: main.py
+  visible: true
+  text: |-
+    import requests
+
+    from bs4 import BeautifulSoup
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/13066#comment
+status: Solved
+feedback:
+  message: <html>Correct solution</html>
+  time: Wed, 21 Jul 2021 18:46:02 UTC
+record: -1
